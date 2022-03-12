@@ -1,0 +1,42 @@
+https://www.aircourts.com/index.php/site/view_club/355/2022-03-16/23%3A00
+
+QUERY STRING PARAMETERS: sport=0&date=2022-03-12&start_time=11%3A30
+sport: 0
+date: 2022-03-12
+start_time: 11:30
+
+REQUEST HEADERS
+Request URL: https://www.aircourts.com/index.php/api/search_with_club/311?sport=0&date=2022-03-12&start_time=11%3A30
+Request Method: GET
+Status Code: 200 OK
+Remote Address: 35.198.82.31:443
+Referrer Policy: strict-origin-when-cross-origin
+
+RESPONSE HEADERS
+Cache-Control: no-store, no-cache, must-revalidate
+Connection: Keep-Alive
+Content-Type: application/json; charset=utf-8
+Date: Sat, 12 Mar 2022 10:45:14 GMT
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Keep-Alive: timeout=5, max=99
+Pragma: no-cache
+Server: Apache/2.4.38 (Unix) OpenSSL/1.0.2q PHP/7.3.2 mod_perl/2.0.8-dev Perl/v5.16.3
+Set-Cookie: session=8d77aeeafe1ab1fcfbaf92e19c870eb3373f6422; expires=Sun, 13-Mar-2022 10:45:14 GMT; Max-Age=86400; path=/; secure; HttpOnly
+Transfer-Encoding: chunked
+X-Powered-By: PHP/7.3.2
+Accept: application/json, text/javascript, */*; q=0.01
+Accept-Encoding: gzip, deflate, br
+Accept-Language: pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: keep-alive
+Cookie: _ga=GA1.2.1393616548.1632585887; intercom-id-wrosduix=35acd3f3-fdf3-4939-860c-a54520fb3032; session=8d77aeeafe1ab1fcfbaf92e19c870eb3373f6422; intercom-session-wrosduix=
+Host: www.aircourts.com
+Referer: https://www.aircourts.com/index.php/site/view_club//rackets-pro-eul
+sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "macOS"
+Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36
+X-Requested-With: XMLHttpRequest
+
