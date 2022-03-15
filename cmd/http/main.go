@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
+	"os"
 
+	"github.com/rubengomes8/aircourts/internal/consuming"
 	"github.com/rubengomes8/aircourts/internal/domain"
+	"github.com/rubengomes8/aircourts/internal/utils"
 )
 
 /*
@@ -17,15 +18,32 @@ import (
 		355 - RACKETS PRO SALDANHA
 		96 - PADEL SPOT OLAIAS
 		387 - VIVE PADEL
+		441 - W Padel
 */
+
+// brew install dlv
+// export GOPATH="$HOME/go"
+// export PATH="$GOPATH/bin:$PATH"
+// dlv debug cmd/http/main.go --headless --listen=:2345 --log
+
+const (
+	startDate = "2022-03-21"
+	endDate   = "2022-03-25"
+	startTime = "18:30"
+	minSlots  = 3
+	maxStart  = "21:00"
+
+	onlyIndoor = true
+	dateLayout = "2006-01-02"
+)
 
 func main() {
 
-	clubIDs := []string{"311"}
-	dates := []string{"2022-03-14", "2022-03-15", "2022-03-16", "2022-03-17", "2022-03-18"}
-	startTime := "18:00"
-
-	var clubs []domain.Club
+	clubIDs := []string{"355", "48", "311", "96", "387", "441"}
+	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, true, true)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	for _, clubID := range clubIDs {
 
@@ -39,13 +57,7 @@ func main() {
 
 			url := fmt.Sprintf("https://www.aircourts.com/index.php/api/search_with_club/%s?sport=0&date=%s&start_time=%s", clubID, date, startTime)
 
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			//We Read the response body on the line below.
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := consuming.HTTPGet(url)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -59,6 +71,10 @@ func main() {
 			var clubCourts []domain.Court
 			for _, result := range searchWithClubResponse.Results {
 
+				if domain.DiscardCourt(result.CourtName, onlyIndoor) {
+					continue
+				}
+
 				if club.ClubName == "" {
 					club.ClubName = result.ClubName
 				}
@@ -68,32 +84,32 @@ func main() {
 					CourtName: result.CourtName,
 				}
 
-				var courtFreeSlots []domain.FreeSlot
-				for _, slot := range result.Slots {
+				freeSlots := domain.FreeSlots(result, date)
 
-					if !slot.Locked {
-
-						freeSlot := domain.FreeSlot{
-							Date:    date,
-							Start:   slot.Start,
-							End:     slot.End,
-							CourtID: slot.CourtID,
-						}
-
-						courtFreeSlots = append(courtFreeSlots, freeSlot)
-					}
-				}
-
-				court.FreeSlots = courtFreeSlots
+				court.FreeSlots = freeSlots
 				clubCourts = append(clubCourts, court)
 			}
 
-			//Convert the body to type string
 			club.Courts = clubCourts
-
-			clubs = append(clubs, club)
 		}
+
+		clubReport := domain.WantedSlots(club, minSlots, maxStart)
+
+		if clubReport == nil {
+			continue
+		}
+
+		err := domain.ReportWantedSlots(os.Stdout, clubReport)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// clubJsonIndent, err := json.MarshalIndent(clubReport, "", "     ")
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
+
+		// // fmt.Printf("%s\n", clubJsonIndent)
 	}
 
-	fmt.Println(clubs)
 }
