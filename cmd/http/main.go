@@ -57,7 +57,7 @@ func main() {
 
 	startExecutionTime := time.Now()
 
-	config, err := toml.LoadFile("./internal/configuration/config.toml")
+	config, err := toml.LoadFile("./configuration/config.toml")
 	if err != nil {
 		log.Fatalln(err)
 	}
