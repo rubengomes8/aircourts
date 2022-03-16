@@ -1,2 +1,4 @@
 /.DS_Store
-/pasta sem nome
+go.mod
+go.sum
+output.txt
