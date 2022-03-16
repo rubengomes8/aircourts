@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/rubengomes8/aircourts/internal/consuming"
 	"github.com/rubengomes8/aircourts/internal/domain"
@@ -13,12 +14,18 @@ import (
 
 /*
 	CLUBES:
-		311 - RACKETS PRO EUL
-		48 - RACKETS PRO NACIONAL
-		355 - RACKETS PRO SALDANHA
-		96 - PADEL SPOT OLAIAS
-		387 - VIVE PADEL
-		441 - W Padel
+	311 - RACKETS PRO EUL
+	48 - RACKETS PRO NACIONAL
+	355 - RACKETS PRO SALDANHA
+	96 - PADEL SPOT OLAIAS
+	387 - VIVE PADEL
+	441 - W Padel
+*/
+
+/*
+	roof: 0 - Descoberto
+	roof: 1 - Coberto
+	roof: 2 - Indoor
 */
 
 // brew install dlv
@@ -28,30 +35,39 @@ import (
 
 const (
 	startDate = "2022-03-21"
-	endDate   = "2022-03-25"
+	endDate   = "2022-04-01"
 	startTime = "18:30"
 	minSlots  = 3
 	maxStart  = "21:00"
 
-	onlyIndoor = true
-	dateLayout = "2006-01-02"
+	allowFridays  = false
+	allowWeekends = false
+	onlyIndoor    = true
+	includeStart  = true
+	includeEnd    = true
+	dateLayout    = "2006-01-02"
 )
 
 func main() {
 
+	startExecutionTime := time.Now()
+
 	clubIDs := []string{"355", "48", "311", "96", "387", "441"}
-	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, true, true)
+	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, includeStart, includeEnd, allowFridays, allowWeekends)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	for _, clubID := range clubIDs {
+	var clubReport *domain.ClubReport
 
-		club := domain.Club{
-			ClubID: clubID,
-		}
+	for _, date := range dates {
 
-		for _, date := range dates {
+		var club domain.Club
+		for _, clubID := range clubIDs {
+
+			club = domain.Club{
+				ClubID: clubID,
+			}
 
 			club.Date = date
 
@@ -68,10 +84,9 @@ func main() {
 				log.Fatalln(err)
 			}
 
-			var clubCourts []domain.Court
 			for _, result := range searchWithClubResponse.Results {
 
-				if domain.DiscardCourt(result.CourtName, onlyIndoor) {
+				if domain.DiscardCourt(result.CourtName, result.Roof, onlyIndoor) {
 					continue
 				}
 
@@ -87,29 +102,21 @@ func main() {
 				freeSlots := domain.FreeSlots(result, date)
 
 				court.FreeSlots = freeSlots
-				clubCourts = append(clubCourts, court)
+				club.Courts = append(club.Courts, court)
 			}
 
-			club.Courts = clubCourts
+			clubReport = domain.WantedSlots(club, minSlots, maxStart)
+
+			if clubReport == nil {
+				continue
+			}
+
+			err = domain.ReportWantedSlots(os.Stdout, clubReport)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
-
-		clubReport := domain.WantedSlots(club, minSlots, maxStart)
-
-		if clubReport == nil {
-			continue
-		}
-
-		err := domain.ReportWantedSlots(os.Stdout, clubReport)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		// clubJsonIndent, err := json.MarshalIndent(clubReport, "", "     ")
-		// if err != nil {
-		// 	log.Fatalln(err)
-		// }
-
-		// // fmt.Printf("%s\n", clubJsonIndent)
 	}
 
+	fmt.Printf("\nExecution time: %v sec\n", time.Since(startExecutionTime).Seconds())
 }
