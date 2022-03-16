@@ -24,12 +24,16 @@ type FreeSlot struct {
 	CourtID string `json:"court_id"`
 }
 
-func DiscardCourt(courtName string, onlyIndoor bool) bool {
+func DiscardCourt(courtName, roof string, onlyIndoor bool) bool {
 	if strings.Contains(strings.ToLower(courtName), "ténis") {
 		return true
 	}
 
 	if onlyIndoor && strings.Contains(strings.ToLower(courtName), "descoberto") {
+		return true
+	}
+
+	if onlyIndoor && roof == "0" {
 		return true
 	}
 
@@ -117,7 +121,7 @@ func WantedSlots(club Club, minSlots int, maxStart string) *ClubReport {
 				CourtName: court.CourtName,
 				Date:      freeSlot.Date,
 				Start:     slotInit,
-				End:       freeSlot.End,
+				End:       prevEnd,
 			}
 
 			clubReport.WantedSlots = append(clubReport.WantedSlots, ws)
