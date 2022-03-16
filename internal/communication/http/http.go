@@ -1,4 +1,4 @@
-package consuming
+package http
 
 import (
 	"fmt"

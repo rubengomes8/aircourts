@@ -2,7 +2,6 @@ package domain
 
 import (
 	"io"
-	"os"
 	"text/template"
 )
 
@@ -29,10 +28,15 @@ type WantedSlot struct {
 
 func ReportWantedSlots(wr io.Writer, clubReport interface{}) error {
 
+	if clubReport == nil {
+		return nil
+	}
+
 	var report = template.Must(template.New("wantedSlots").Parse(templ))
 
-	if err := report.Execute(os.Stdout, &clubReport); err != nil {
+	if err := report.Execute(wr, &clubReport); err != nil {
 		return err
 	}
+
 	return nil
 }

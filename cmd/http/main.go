@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"github.com/rubengomes8/aircourts/internal/consuming"
+	"github.com/pelletier/go-toml"
+	"github.com/rubengomes8/aircourts/internal/communication/http"
+	"github.com/rubengomes8/aircourts/internal/communication/smtp"
 	"github.com/rubengomes8/aircourts/internal/domain"
 	"github.com/rubengomes8/aircourts/internal/utils"
 )
@@ -46,17 +49,32 @@ const (
 	includeStart  = true
 	includeEnd    = true
 	dateLayout    = "2006-01-02"
+
+	sendEmail = false
 )
 
 func main() {
 
 	startExecutionTime := time.Now()
 
+	config, err := toml.LoadFile("./internal/configuration/config.toml")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	senderEmail := config.Get("sender.email").(string)
+	senderPwd := config.Get("sender.password").(string)
+
+	sender := smtp.NewSender(senderEmail, senderPwd)
+
 	clubIDs := []string{"355", "48", "311", "96", "387", "441"}
 	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, includeStart, includeEnd, allowFridays, allowWeekends)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	var buffer bytes.Buffer
+	w := bufio.NewWriter(&buffer)
 
 	var clubReport *domain.ClubReport
 
@@ -73,7 +91,7 @@ func main() {
 
 			url := fmt.Sprintf("https://www.aircourts.com/index.php/api/search_with_club/%s?sport=0&date=%s&start_time=%s", clubID, date, startTime)
 
-			body, err := consuming.HTTPGet(url)
+			body, err := http.HTTPGet(url)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -111,9 +129,37 @@ func main() {
 				continue
 			}
 
-			err = domain.ReportWantedSlots(os.Stdout, clubReport)
+			err = domain.ReportWantedSlots(w, clubReport)
 			if err != nil {
 				log.Fatalln(err)
+			}
+		}
+	}
+
+	w.Flush()
+	emailBody := buffer.String()
+
+	if sendEmail {
+
+		if emailBody != "" {
+			subject := config.Get("email.subject").(string)
+			from := config.Get("email.from").(string)
+			receivers := config.Get("email.to").([]interface{})
+
+			for _, to := range receivers {
+
+				email := smtp.Email{
+					To:      to.(string),
+					From:    from,
+					Subject: subject,
+					Body:    emailBody,
+				}
+
+				fmt.Println("Sending Email...")
+				err = sender.SendEmail(email)
+				if err != nil {
+					log.Fatalln(err)
+				}
 			}
 		}
 	}
