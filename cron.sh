@@ -1,5 +1,5 @@
-while true; 
+while true;
+    echo starting scrapper
     do ./bin/scrapper; 
-    echo running scrapper
     sleep 3600; # sleep 1 hour
 done
