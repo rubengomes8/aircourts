@@ -41,7 +41,7 @@ func DatesBetween(startDate, endDate, layout string, includeStart, includeEnd, a
 	}
 
 	if includeEnd {
-		if start.Equal(end) {
+		if start.Equal(end) && (allowWeekends || !IsWeekend(start)) && (allowFridays || !IsFriday(start)) {
 			datesBetween = append(datesBetween, start.Format(layout))
 		}
 	}

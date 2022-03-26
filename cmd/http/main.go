@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"time"
@@ -37,27 +38,28 @@ import (
 // dlv debug cmd/http/main.go --headless --listen=:2345 --log
 
 const (
-	startDate = "2022-03-28"
-	endDate   = "2022-04-05"
-	startTime = "18:30"
-	minSlots  = 3
-	maxStart  = "22:00"
-
-	allowFridays  = false
-	allowWeekends = false
-	onlyIndoor    = true
-	includeStart  = true
-	includeEnd    = true
-	dateLayout    = "2006-01-02"
-
-	sendEmail = true
+	dateLayout = "2006-01-02"
 )
 
 func main() {
 
 	startExecutionTime := time.Now()
 
-	validDates, err := utils.ValidDates(startDate, endDate, dateLayout)
+	startDate := flag.String("start", time.Now().Format(dateLayout), "start date")
+	endDate := flag.String("end", time.Now().AddDate(0, 0, 7).Format(dateLayout), "end date")
+	startTime := flag.String("startTime", "18:30", "starting time")
+	maxStart := flag.String("maxStart", "22:00", "maximum starting time")
+	minSlots := flag.Int("slots", 3, "minimum slots in a row")
+	allowFridays := flag.Bool("fridays", false, "allow fridays")
+	allowWeekends := flag.Bool("weekends", false, "allow weekends")
+	onlyIndoor := flag.Bool("indoor", true, "only indoor")
+	includeStart := flag.Bool("includeStart", true, "include starting time")
+	includeEnd := flag.Bool("includeEnd", true, "include ending time")
+	sendEmail := flag.Bool("email", false, "send email with results")
+
+	flag.Parse()
+
+	validDates, err := utils.ValidDates(*startDate, *endDate, dateLayout)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -76,7 +78,7 @@ func main() {
 	sender := smtp.NewSender(senderEmail, senderPwd)
 
 	clubIDs := []string{"355", "48", "311", "96", "441"}
-	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, includeStart, includeEnd, allowFridays, allowWeekends)
+	dates, err := utils.DatesBetween(*startDate, *endDate, dateLayout, *includeStart, *includeEnd, *allowFridays, *allowWeekends)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -97,7 +99,7 @@ func main() {
 
 			club.Date = date
 
-			url := fmt.Sprintf("https://www.aircourts.com/index.php/api/search_with_club/%s?sport=0&date=%s&start_time=%s", clubID, date, startTime)
+			url := fmt.Sprintf("https://www.aircourts.com/index.php/api/search_with_club/%s?sport=0&date=%s&start_time=%s", clubID, date, *startTime)
 
 			body, err := http.HTTPGet(url)
 			if err != nil {
@@ -112,7 +114,7 @@ func main() {
 
 			for _, result := range searchWithClubResponse.Results {
 
-				if domain.DiscardCourt(result.CourtName, result.Roof, onlyIndoor) {
+				if domain.DiscardCourt(result.CourtName, result.Roof, *onlyIndoor) {
 					continue
 				}
 
@@ -131,7 +133,7 @@ func main() {
 				club.Courts = append(club.Courts, court)
 			}
 
-			clubReport = domain.WantedSlots(club, minSlots, maxStart)
+			clubReport = domain.WantedSlots(club, *minSlots, *maxStart)
 
 			if clubReport == nil {
 				continue
@@ -147,7 +149,7 @@ func main() {
 	w.Flush()
 	emailBody := buffer.String()
 
-	if sendEmail {
+	if *sendEmail {
 
 		if emailBody != "" {
 			subject := config.Get("email.subject").(string)
@@ -172,7 +174,9 @@ func main() {
 		}
 	}
 
-	fmt.Println(emailBody)
+	if emailBody != "" {
+		fmt.Println(emailBody)
+	}
 
-	fmt.Printf("\nExecution time: %v sec\n", time.Since(startExecutionTime).Seconds())
+	fmt.Printf("Execution time: %v sec\n", time.Since(startExecutionTime).Seconds())
 }
