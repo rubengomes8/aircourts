@@ -50,7 +50,7 @@ const (
 	includeEnd    = true
 	dateLayout    = "2006-01-02"
 
-	sendEmail = false
+	sendEmail = true
 )
 
 func main() {
