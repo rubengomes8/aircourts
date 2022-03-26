@@ -174,7 +174,9 @@ func main() {
 		}
 	}
 
-	fmt.Println(emailBody)
+	if emailBody != "" {
+		fmt.Println(emailBody)
+	}
 
-	fmt.Printf("\nExecution time: %v sec\n", time.Since(startExecutionTime).Seconds())
+	fmt.Printf("Execution time: %v sec\n", time.Since(startExecutionTime).Seconds())
 }
