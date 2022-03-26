@@ -24,5 +24,11 @@ clean:
 build:
 	GOGC=off go build -mod=vendor -a -installsuffix cgo -o ./bin/scrapper	cmd/http/main.go
 
-run-http:
-	go run cmd/http/main.go
+run-scrapper:
+	./bin/scrapper
+
+run-scrapper-email:
+	./bin/scrapper -email=true
+
+run-scrapper-outdoor:
+	./bin/scrapper -indoor=false
