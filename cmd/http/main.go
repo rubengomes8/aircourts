@@ -37,11 +37,11 @@ import (
 // dlv debug cmd/http/main.go --headless --listen=:2345 --log
 
 const (
-	startDate = "2022-03-21"
-	endDate   = "2022-04-01"
+	startDate = "2022-03-28"
+	endDate   = "2022-04-05"
 	startTime = "18:30"
 	minSlots  = 3
-	maxStart  = "21:00"
+	maxStart  = "22:00"
 
 	allowFridays  = false
 	allowWeekends = false
@@ -57,6 +57,14 @@ func main() {
 
 	startExecutionTime := time.Now()
 
+	validDates, err := utils.ValidDates(startDate, endDate, dateLayout)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if !validDates {
+		log.Fatal("StartDate after EndDate.")
+	}
+
 	config, err := toml.LoadFile("./configuration/config.toml")
 	if err != nil {
 		log.Fatalln(err)
@@ -67,7 +75,7 @@ func main() {
 
 	sender := smtp.NewSender(senderEmail, senderPwd)
 
-	clubIDs := []string{"355", "48", "311", "96", "387", "441"}
+	clubIDs := []string{"355", "48", "311", "96", "441"}
 	dates, err := utils.DatesBetween(startDate, endDate, dateLayout, includeStart, includeEnd, allowFridays, allowWeekends)
 	if err != nil {
 		log.Fatalln(err)
@@ -163,6 +171,8 @@ func main() {
 			}
 		}
 	}
+
+	fmt.Println(emailBody)
 
 	fmt.Printf("\nExecution time: %v sec\n", time.Since(startExecutionTime).Seconds())
 }

@@ -1,6 +1,8 @@
 package utils
 
-import "time"
+import (
+	"time"
+)
 
 // Date in format YYYY-MM-DD = 2006-01-02
 func DatesBetween(startDate, endDate, layout string, includeStart, includeEnd, allowFridays, allowWeekends bool) ([]string, error) {
@@ -67,4 +69,21 @@ func IsFriday(t time.Time) bool {
 	}
 
 	return false
+}
+
+func ValidDates(startDate, endDate, dateLayout string) (bool, error) {
+	timeStartDate, err := time.Parse(dateLayout, startDate)
+	if err != nil {
+		return false, err
+	}
+	timeEndDate, err := time.Parse(dateLayout, endDate)
+	if err != nil {
+		return false, err
+	}
+
+	if timeStartDate.After(timeEndDate) {
+		return false, nil
+	}
+
+	return true, nil
 }
