@@ -178,5 +178,5 @@ func main() {
 		fmt.Println(emailBody)
 	}
 
-	fmt.Printf("Execution time: %v sec\n", time.Since(startExecutionTime).Seconds())
+	fmt.Printf("### %v - Execution time: %v sec\n", time.Now(), time.Since(startExecutionTime).Seconds())
 }
