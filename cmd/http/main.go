@@ -24,6 +24,8 @@ import (
 	96 - PADEL SPOT OLAIAS
 	387 - VIVE PADEL
 	441 - W Padel
+	110 - Indoor Padel Center
+	106 - Padel CIF
 */
 
 /*
@@ -77,7 +79,8 @@ func main() {
 
 	sender := smtp.NewSender(senderEmail, senderPwd)
 
-	clubIDs := []string{"355", "48", "311", "96", "441"}
+	clubIDs := []string{"355", "48", "311", "96", "441", "106", "110"}
+
 	dates, err := utils.DatesBetween(*startDate, *endDate, dateLayout, *includeStart, *includeEnd, *allowFridays, *allowWeekends)
 	if err != nil {
 		log.Fatalln(err)
