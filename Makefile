@@ -22,13 +22,13 @@ clean:
 
 # BUILD
 build:
-	GOGC=off go build -mod=vendor -a -installsuffix cgo -o ./bin/scrapper	cmd/http/main.go
+	GOGC=off go build -mod=vendor -a -installsuffix cgo -o ./bin/find_courts	cmd/http/main.go
 
-run-scrapper:
-	./bin/scrapper
+run-finder:
+	./bin/find_courts
 
-run-scrapper-email:
-	./bin/scrapper -email=true
+run-finder-email:
+	./bin/find_courts -email=true
 
-run-scrapper-outdoor:
-	./bin/scrapper -indoor=false
+run-finder-outdoor:
+	./bin/find_courts -indoor=false
