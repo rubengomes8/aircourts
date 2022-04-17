@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"errors"
 	"time"
 )
 
 // Date in format YYYY-MM-DD = 2006-01-02
-func DatesBetween(startDate, endDate, layout string, includeStart, includeEnd, allowFridays, allowWeekends bool) ([]string, error) {
+func DatesBetween(startDate, endDate, layout string, allowFridays, allowWeekends bool) ([]string, error) {
 
 	datesBetween := []string{}
 
@@ -17,10 +18,6 @@ func DatesBetween(startDate, endDate, layout string, includeStart, includeEnd, a
 	end, err := time.Parse(layout, endDate)
 	if err != nil {
 		return nil, err
-	}
-
-	if !includeStart {
-		start = start.Add(time.Hour * 24)
 	}
 
 	for start.Before(end) {
@@ -40,13 +37,30 @@ func DatesBetween(startDate, endDate, layout string, includeStart, includeEnd, a
 		start = start.Add(time.Hour * 24)
 	}
 
-	if includeEnd {
-		if start.Equal(end) && (allowWeekends || !IsWeekend(start)) && (allowFridays || !IsFriday(start)) {
-			datesBetween = append(datesBetween, start.Format(layout))
-		}
+	if start.Equal(end) && (allowWeekends || !IsWeekend(start)) && (allowFridays || !IsFriday(start)) {
+		datesBetween = append(datesBetween, start.Format(layout))
 	}
 
 	return datesBetween, nil
+}
+
+func DatesFromNow(dateLayout string, numDays int) ([]string, error) {
+
+	dates := []string{}
+
+	if numDays < 1 {
+		return dates, errors.New("number of days must be greater than 0")
+	}
+
+	timestamp := time.Now()
+	dates = append(dates, timestamp.Format(dateLayout))
+
+	for i := 1; i < numDays; i++ {
+		timestamp = timestamp.Add(time.Hour * 24)
+		dates = append(dates, timestamp.Format(dateLayout))
+	}
+
+	return dates, nil
 }
 
 func IsWeekend(t time.Time) bool {

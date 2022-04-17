@@ -47,16 +47,15 @@ func main() {
 
 	startExecutionTime := time.Now()
 
-	startDate := flag.String("start", time.Now().Format(dateLayout), "start date")
-	endDate := flag.String("end", time.Now().AddDate(0, 0, 7).Format(dateLayout), "end date")
-	startTime := flag.String("startTime", "18:30", "starting time")
-	maxStart := flag.String("maxStart", "22:00", "maximum starting time")
+	startDate := flag.String("start", time.Now().Format(dateLayout), "start date (YYYY-MM-DD)")
+	endDate := flag.String("end", time.Now().AddDate(0, 0, 7).Format(dateLayout), "end date (YYYY-MM-DD)")
+	startTime := flag.String("startTime", "18:30", "starting time (hh24:mm)")
+	maxStart := flag.String("maxStart", "22:00", "maximum starting time (hh24:mm)")
 	minSlots := flag.Int("slots", 3, "minimum slots in a row")
+	numDays := flag.Int("numDays", 0, "number of days to search (including today)")
 	allowFridays := flag.Bool("fridays", false, "allow fridays")
 	allowWeekends := flag.Bool("weekends", false, "allow weekends")
-	onlyIndoor := flag.Bool("indoor", true, "only indoor")
-	includeStart := flag.Bool("includeStart", true, "include starting time")
-	includeEnd := flag.Bool("includeEnd", true, "include ending time")
+	onlyIndoor := flag.Bool("indoor", true, "only indoor courts")
 	sendEmail := flag.Bool("email", false, "send email with results")
 
 	flag.Parse()
@@ -81,9 +80,17 @@ func main() {
 
 	clubIDs := []string{"355", "48", "311", "96", "441", "106", "110"}
 
-	dates, err := utils.DatesBetween(*startDate, *endDate, dateLayout, *includeStart, *includeEnd, *allowFridays, *allowWeekends)
-	if err != nil {
-		log.Fatalln(err)
+	var dates []string
+	if *numDays != 0 {
+		dates, err = utils.DatesFromNow(dateLayout, *numDays)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		dates, err = utils.DatesBetween(*startDate, *endDate, dateLayout, *allowFridays, *allowWeekends)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	var buffer bytes.Buffer
