@@ -1,8 +1,8 @@
-package domain
+package entity
 
 import (
+	"html/template"
 	"io"
-	"text/template"
 )
 
 const (
@@ -17,13 +17,6 @@ Date:   {{.Date}} {{.Start}} - {{.End}}
 type ClubReport struct {
 	ClubName    string       `json:"club_name"`
 	WantedSlots []WantedSlot `json:"wanted_slots"`
-}
-
-type WantedSlot struct {
-	CourtName string `json:"court_name"`
-	Date      string `json:"date"`
-	Start     string `json:"start"`
-	End       string `json:"end"`
 }
 
 func ReportWantedSlots(wr io.Writer, clubReport interface{}) error {

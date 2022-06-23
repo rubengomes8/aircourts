@@ -12,20 +12,25 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/rubengomes8/aircourts/internal/communication/http"
 	"github.com/rubengomes8/aircourts/internal/communication/smtp"
-	"github.com/rubengomes8/aircourts/internal/domain"
+	"github.com/rubengomes8/aircourts/internal/core/dto"
+	"github.com/rubengomes8/aircourts/internal/core/entity"
 	"github.com/rubengomes8/aircourts/internal/utils"
 )
 
 /*
 	CLUBES:
+	355 - RACKETS PRO SALDANHA
 	311 - RACKETS PRO EUL
 	48 - RACKETS PRO NACIONAL
-	355 - RACKETS PRO SALDANHA
 	96 - PADEL SPOT OLAIAS
-	387 - VIVE PADEL
 	441 - W Padel
+	387 - VIVE PADEL
 	110 - Indoor Padel Center
 	106 - Padel CIF
+	390 - Padel EXPO
+	316 - Padel Benfica
+	56 - Ténis e Padel Boa hora
+	89 - Lambert
 */
 
 /*
@@ -76,10 +81,10 @@ func main() {
 
 	senderEmail := config.Get("sender.email").(string)
 	senderPwd := config.Get("sender.password").(string)
-
 	sender := smtp.NewSender(senderEmail, senderPwd)
 
-	clubIDs := []string{"355", "48", "311", "96", "441", "106", "110"}
+	// clubIDs := []string{"355", "48", "311", "96", "441", "387", "110", "106", "390", "316", "56", "89"}
+	clubIDs := []string{"355", "48", "311", "96", "441", "387", "110", "106"}
 
 	dates, err := utils.DatesBetween(*startDate, *endDate, dateLayout, *includeStart, *includeEnd, *allowFridays, *allowWeekends)
 	if err != nil {
@@ -89,14 +94,14 @@ func main() {
 	var buffer bytes.Buffer
 	w := bufio.NewWriter(&buffer)
 
-	var clubReport *domain.ClubReport
+	var clubReport *entity.ClubReport
 
 	for _, date := range dates {
 
-		var club domain.Club
+		var club entity.Club
 		for _, clubID := range clubIDs {
 
-			club = domain.Club{
+			club = entity.Club{
 				ClubID: clubID,
 			}
 
@@ -109,7 +114,7 @@ func main() {
 				log.Fatalln(err)
 			}
 
-			var searchWithClubResponse domain.SearchWithClubResponse
+			var searchWithClubResponse dto.SearchWithClubResponse
 			err = json.Unmarshal(body, &searchWithClubResponse)
 			if err != nil {
 				log.Fatalln(err)
@@ -117,7 +122,7 @@ func main() {
 
 			for _, result := range searchWithClubResponse.Results {
 
-				if domain.DiscardCourt(result.CourtName, result.Roof, *onlyIndoor) {
+				if entity.DiscardCourt(result.CourtName, result.Roof, *onlyIndoor) {
 					continue
 				}
 
@@ -125,24 +130,24 @@ func main() {
 					club.ClubName = result.ClubName
 				}
 
-				court := domain.Court{
+				court := entity.Court{
 					CourtID:   result.CourtID,
 					CourtName: result.CourtName,
 				}
 
-				freeSlots := domain.FreeSlots(result, date)
+				freeSlots := result.FreeSlots(date)
 
 				court.FreeSlots = freeSlots
 				club.Courts = append(club.Courts, court)
 			}
 
-			clubReport = domain.WantedSlots(club, *minSlots, *maxStart)
+			clubReport = club.WantedSlots(*minSlots, *maxStart)
 
 			if clubReport == nil {
 				continue
 			}
 
-			err = domain.ReportWantedSlots(w, clubReport)
+			err = entity.ReportWantedSlots(w, clubReport)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -151,28 +156,17 @@ func main() {
 
 	w.Flush()
 	emailBody := buffer.String()
-
 	if *sendEmail {
 
 		if emailBody != "" {
+
 			subject := config.Get("email.subject").(string)
 			from := config.Get("email.from").(string)
 			receivers := config.Get("email.to").([]interface{})
 
-			for _, to := range receivers {
-
-				email := smtp.Email{
-					To:      to.(string),
-					From:    from,
-					Subject: subject,
-					Body:    emailBody,
-				}
-
-				fmt.Println("Sending Email...")
-				err = sender.SendEmail(email)
-				if err != nil {
-					log.Fatalln(err)
-				}
+			err := sender.SendEmails(subject, emailBody, from, receivers)
+			if err != nil {
+				log.Fatalln(err)
 			}
 		}
 	}

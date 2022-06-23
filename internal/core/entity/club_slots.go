@@ -1,8 +1,4 @@
-package domain
-
-import (
-	"strings"
-)
+package entity
 
 type Club struct {
 	ClubID   string  `json:"club_id"`
@@ -24,51 +20,13 @@ type FreeSlot struct {
 	CourtID string `json:"court_id"`
 }
 
-func DiscardCourt(courtName, roof string, onlyIndoor bool) bool {
-	if strings.Contains(strings.ToLower(courtName), "ténis") {
-		return true
-	}
-
-	if onlyIndoor && strings.Contains(strings.ToLower(courtName), "descoberto") {
-		return true
-	}
-
-	if onlyIndoor && roof == "0" {
-		return true
-	}
-
-	return false
-}
-
-func FreeSlots(courtResult Result, date string) []FreeSlot {
-
-	var freeSlots []FreeSlot
-
-	for _, slot := range courtResult.Slots {
-
-		if !slot.Locked {
-
-			freeSlot := FreeSlot{
-				Date:    date,
-				Start:   slot.Start,
-				End:     slot.End,
-				CourtID: slot.CourtID,
-			}
-
-			freeSlots = append(freeSlots, freeSlot)
-		}
-	}
-
-	return freeSlots
-}
-
-func WantedSlots(club Club, minSlots int, maxStart string) *ClubReport {
+func (c Club) WantedSlots(minSlots int, maxStart string) *ClubReport {
 
 	var clubReport ClubReport
 
 	var ws WantedSlot
 	isFirst := true
-	for _, court := range club.Courts {
+	for _, court := range c.Courts {
 
 		numSlotsInSeq := 0
 		prevEnd := ""
@@ -92,7 +50,7 @@ func WantedSlots(club Club, minSlots int, maxStart string) *ClubReport {
 				if numSlotsInSeq >= minSlots {
 
 					if isFirst {
-						clubReport.ClubName = club.ClubName
+						clubReport.ClubName = c.ClubName
 						isFirst = false
 					}
 
@@ -113,7 +71,7 @@ func WantedSlots(club Club, minSlots int, maxStart string) *ClubReport {
 		if numSlotsInSeq >= minSlots {
 
 			if isFirst {
-				clubReport.ClubName = club.ClubName
+				clubReport.ClubName = c.ClubName
 				isFirst = false
 			}
 

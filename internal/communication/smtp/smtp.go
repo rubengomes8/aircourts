@@ -65,3 +65,24 @@ func Valid(email string) bool {
 
 	return true
 }
+
+func (sender Sender) SendEmails(subject, body, from string, receivers []interface{}) error {
+
+	for _, to := range receivers {
+
+		email := Email{
+			To:      to.(string),
+			From:    from,
+			Subject: subject,
+			Body:    body,
+		}
+
+		fmt.Println("Sending Email...")
+		err := sender.SendEmail(email)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
